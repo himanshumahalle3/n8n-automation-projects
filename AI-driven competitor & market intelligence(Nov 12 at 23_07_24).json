@@ -1,0 +1,696 @@
+{
+  "updatedAt": "2026-11-12T17:37:24.060Z",
+  "createdAt": "2026-11-12T11:34:28.788Z",
+  "id": "e2Iv28jnGdTNCImT",
+  "name": "AI-driven competitor & market intelligence",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "9a08ac46-0e1c-4e7f-b83d-9e0537634aef",
+      "name": "Scheduled Analysis Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        528,
+        432
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/apify~web-scraper/run-sync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"startUrls\": [\n    {\n      \"url\": \"https://www.notion.so\"\n    }\n  ],\n  \"pageFunction\": \"async function pageFunction(context) { return { url: context.request.url, title: document.title, text: document.body.innerText.slice(0, 2000) }; }\"\n}",
+        "options": {}
+      },
+      "id": "c52f9e5a-f2c9-4895-b9cc-a00fed3ae1ee",
+      "name": "Apify",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        752,
+        336
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "83Ui2B9M1d91XB8i",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/search?q=technology",
+        "options": {}
+      },
+      "id": "f055a43d-ed97-4ae9-b9f9-3cb2baf55b0e",
+      "name": "Fetch News & Blog RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "position": [
+        752,
+        528
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {},
+      "id": "01962693-51f2-4e2e-8b66-e2af1c048251",
+      "name": "Combine Data Sources",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        976,
+        432
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "jsCode": "const processedItems = [];\nfor (const item of $input.all()) {\n  let textContent = '';\n  let source = 'Unknown';\n  let url = '';\n  let title = '';\n\n  // Example for HTTP Request output (assuming data is in 'item.json.data')\n  if (item.json && item.json.data && Array.isArray(item.json.data.results)) {\n    for (const result of item.json.data.results) {\n      if (result.html) { // Assuming scraper returns HTML\n        // Simple text extraction (consider a more robust library like 'cheerio' if needed)\n        // const cheerio = require('cheerio'); // Requires custom n8n setup if not bundled\n        // const $ = cheerio.load(result.html);\n        // textContent = $('body').text().slice(0, 4000); // Limit text length for AI\n        textContent = result.html.replace(/<[^>]*>/g, '').slice(0, 4000); // Basic HTML stripping\n      } else if (result.text) { // Assuming scraper returns plain text\n        textContent = result.text.slice(0, 4000);\n      }\n      title = result.title || '';\n      url = result.url || '';\n      source = result.source || 'Web Scraper Data';\n\n      if (textContent.length > 50) { // Only process meaningful content\n        processedItems.push({\n          json: {\n            content: textContent,\n            title: title,\n            url: url,\n            source: source\n          }\n        });\n      }\n    }\n  }\n\n  // Example for RSS Feed output\n  if (item.json.description && item.json.title && item.json.link) {\n    textContent = item.json.description.slice(0, 4000);\n    title = item.json.title;\n    url = item.json.link;\n    source = 'RSS Feed';\n     if (textContent.length > 50) {\n        processedItems.push({\n          json: {\n            content: textContent,\n            title: title,\n            url: url,\n            source: source\n          }\n        });\n    }\n  }\n}\nreturn processedItems;"
+      },
+      "id": "dd1ef4a6-613f-4055-9863-b900042ff968",
+      "name": "Pre-process Data for AI",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1184,
+        432
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "folderId": "1eTHbduy-YuLqJIarolV7NsHbSKn6vyaH",
+        "title": "=Market Intel Report - {{ new Date().toISOString().slice(0,10) }}"
+      },
+      "id": "54ab8c2c-4641-4f1d-b1b5-67a2c20f7825",
+      "name": "Generate Market Intelligence Report",
+      "type": "n8n-nodes-base.googleDocs",
+      "position": [
+        576,
+        768
+      ],
+      "typeVersion": 2,
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "l4oGEQnvmg9aQ4b0",
+          "name": "Google Docs account"
+        }
+      },
+      "notes": "Value:\n\ncompetitorName: ={{ JSON.parse($json.choices[0].message.content).Competitor_Name }}\n\nstrengths: ={{ JSON.parse($json.choices[0].message.content).Strengths.join('\\n- ') }}\n\nweaknesses: ={{ JSON.parse($json.choices[0].message.content).Weaknesses.join('\\n- ') }}\n\nopportunities: ={{ JSON.parse($json.choices[0].message.content).Opportunities_for_Our_Company.join('\\n- ') }}\n\nthreats: ={{ JSON.parse($json.choices[0].message.content).Threats_to_Our_Company.join('\\n- ') }}\n\nsalesTalkingPoints: ={{ JSON.parse($json.choices[0].message.content).Actionable_Sales_Talking_Points_Suggestion.join('\\n- ') }}"
+    },
+    {
+      "parameters": {
+        "content": "## Flow",
+        "height": 768,
+        "width": 1488,
+        "color": 3
+      },
+      "id": "fe1c1f20-bda7-4bf3-9c35-ee8e21241218",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        368,
+        240
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.8-flash",
+          "mode": "list",
+          "cachedResultName": "Gemini 3.8 Flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are an expert market intelligence analyst. Your task is to analyze raw data about IT companies and provide concise, actionable insights for a sales team."
+            },
+            {
+              "content": "=Analyze the following collected data about our competitor from various sources. Each data point is clearly labeled with its source.\n\nCollected Data:\n{{ $json.map(item => `- Source: ${item.json.source}\\n  Title: ${item.json.title}\\n  URL: ${item.json.url}\\n  Content: ${item.json.content}`).join('\\n\\n') }}\n\nBased on this, provide the following in a structured JSON format:\n1.  **Competitor Name:** (Identify the primary competitor if clear, or 'General Market Trends')\n2.  **Key Offerings/Features Identified:** (List new features, services, or product updates)\n3.  **Pricing/Promotions:** (Any pricing changes or ongoing promotions)\n4.  **Customer Sentiment (from reviews/feedback):** (Summarize overall sentiment: Positive, Negative, Mixed, with key reasons)\n5.  **Strengths:** (What are their identified strengths?)\n6.  **Weaknesses:** (What are their identified weaknesses or customer pain points?)\n7.  **Opportunities for Our Company:** (How can we leverage this info? New market segments, specific product angles, gaps we can fill)\n8.  **Threats to Our Company:** (What competitive actions should we be aware of?)\n9.  **Actionable Sales Talking Points Suggestion:** (3-5 concise bullet points for our sales team to use against this competitor or about market trends)\n\nEnsure the output is valid JSON."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1424,
+        432
+      ],
+      "id": "02c351bb-e176-4676-b9df-aad263c2e7f4",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "lHOoVtIigKGUc6sV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.8-flash",
+          "mode": "list",
+          "cachedResultName": "Gemini 3.8 Flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a sales coach. Based on the competitor insights provided and a specific sales context, generate highly personalized and persuasive talking points for a sales representative."
+            },
+            {
+              "content": "=Recent competitor insights for {{ $json.name }} show:\nStrengths: {{ $json.strengths }}\nWeaknesses: {{ $json.weaknesses }}\nNew Features: {{ $json.new_features }}\n\nOur product/service strengths are: [OUR_PRODUCT_USP_1], [OUR_PRODUCT_USP_2].\n\nThe current sales context is: We are pitching to a prospect who is currently using [COMPETITOR_NAME_FROM_CRM_CONTEXT] and values [PROSPECT_VALUE_1], [PROSPECT_VALUE_2].\n\nGenerate 3-5 concise, actionable sales talking points for our sales rep."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        768
+      ],
+      "id": "8dc54799-3ed4-4615-909e-67d90b74d3ca",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "lHOoVtIigKGUc6sV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Apify": {
+      "main": [
+        [
+          {
+            "node": "Combine Data Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Data Sources": {
+      "main": [
+        [
+          {
+            "node": "Pre-process Data for AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch News & Blog RSS": {
+      "main": [
+        [
+          {
+            "node": "Combine Data Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Pre-process Data for AI": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scheduled Analysis Trigger": {
+      "main": [
+        [
+          {
+            "node": "Apify",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch News & Blog RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Market Intelligence Report": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Generate Market Intelligence Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": {
+    "node:Scheduled Analysis Trigger": {
+      "recurrenceRules": [
+        null
+      ],
+      "recurrenceRuleSignatures": [
+        null
+      ]
+    }
+  },
+  "meta": {
+    "templateId": "6672",
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "aaba3714-11d5-4ea2-ba09-2bc52215c058",
+  "activeVersionId": "aaba3714-11d5-4ea2-ba09-2bc52215c058",
+  "versionCounter": 78,
+  "triggerCount": 1,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "parentFolder": null,
+  "activeVersion": {
+    "updatedAt": "2026-11-12T17:38:29.000Z",
+    "createdAt": "2026-11-12T17:37:24.061Z",
+    "versionId": "aaba3714-11d5-4ea2-ba09-2bc52215c058",
+    "workflowId": "e2Iv28jnGdTNCImT",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {}
+            ]
+          }
+        },
+        "id": "9a08ac46-0e1c-4e7f-b83d-9e0537634aef",
+        "name": "Scheduled Analysis Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "position": [
+          528,
+          432
+        ],
+        "typeVersion": 1.2
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.apify.com/v2/acts/apify~web-scraper/run-sync",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\n  \"startUrls\": [\n    {\n      \"url\": \"https://www.notion.so\"\n    }\n  ],\n  \"pageFunction\": \"async function pageFunction(context) { return { url: context.request.url, title: document.title, text: document.body.innerText.slice(0, 2000) }; }\"\n}",
+          "options": {}
+        },
+        "id": "c52f9e5a-f2c9-4895-b9cc-a00fed3ae1ee",
+        "name": "Apify",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          752,
+          336
+        ],
+        "typeVersion": 4.2,
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "83Ui2B9M1d91XB8i",
+            "name": "Header Auth account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "https://news.google.com/rss/search?q=technology",
+          "options": {}
+        },
+        "id": "f055a43d-ed97-4ae9-b9f9-3cb2baf55b0e",
+        "name": "Fetch News & Blog RSS",
+        "type": "n8n-nodes-base.rssFeedRead",
+        "position": [
+          752,
+          528
+        ],
+        "typeVersion": 1.2
+      },
+      {
+        "parameters": {},
+        "id": "01962693-51f2-4e2e-8b66-e2af1c048251",
+        "name": "Combine Data Sources",
+        "type": "n8n-nodes-base.merge",
+        "position": [
+          976,
+          432
+        ],
+        "typeVersion": 3.2
+      },
+      {
+        "parameters": {
+          "jsCode": "const processedItems = [];\nfor (const item of $input.all()) {\n  let textContent = '';\n  let source = 'Unknown';\n  let url = '';\n  let title = '';\n\n  // Example for HTTP Request output (assuming data is in 'item.json.data')\n  if (item.json && item.json.data && Array.isArray(item.json.data.results)) {\n    for (const result of item.json.data.results) {\n      if (result.html) { // Assuming scraper returns HTML\n        // Simple text extraction (consider a more robust library like 'cheerio' if needed)\n        // const cheerio = require('cheerio'); // Requires custom n8n setup if not bundled\n        // const $ = cheerio.load(result.html);\n        // textContent = $('body').text().slice(0, 4000); // Limit text length for AI\n        textContent = result.html.replace(/<[^>]*>/g, '').slice(0, 4000); // Basic HTML stripping\n      } else if (result.text) { // Assuming scraper returns plain text\n        textContent = result.text.slice(0, 4000);\n      }\n      title = result.title || '';\n      url = result.url || '';\n      source = result.source || 'Web Scraper Data';\n\n      if (textContent.length > 50) { // Only process meaningful content\n        processedItems.push({\n          json: {\n            content: textContent,\n            title: title,\n            url: url,\n            source: source\n          }\n        });\n      }\n    }\n  }\n\n  // Example for RSS Feed output\n  if (item.json.description && item.json.title && item.json.link) {\n    textContent = item.json.description.slice(0, 4000);\n    title = item.json.title;\n    url = item.json.link;\n    source = 'RSS Feed';\n     if (textContent.length > 50) {\n        processedItems.push({\n          json: {\n            content: textContent,\n            title: title,\n            url: url,\n            source: source\n          }\n        });\n    }\n  }\n}\nreturn processedItems;"
+        },
+        "id": "dd1ef4a6-613f-4055-9863-b900042ff968",
+        "name": "Pre-process Data for AI",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1184,
+          432
+        ],
+        "typeVersion": 2
+      },
+      {
+        "parameters": {
+          "folderId": "1eTHbduy-YuLqJIarolV7NsHbSKn6vyaH",
+          "title": "=Market Intel Report - {{ new Date().toISOString().slice(0,10) }}"
+        },
+        "id": "54ab8c2c-4641-4f1d-b1b5-67a2c20f7825",
+        "name": "Generate Market Intelligence Report",
+        "type": "n8n-nodes-base.googleDocs",
+        "position": [
+          576,
+          768
+        ],
+        "typeVersion": 2,
+        "credentials": {
+          "googleDocsOAuth2Api": {
+            "id": "l4oGEQnvmg9aQ4b0",
+            "name": "Google Docs account"
+          }
+        },
+        "notes": "Value:\n\ncompetitorName: ={{ JSON.parse($json.choices[0].message.content).Competitor_Name }}\n\nstrengths: ={{ JSON.parse($json.choices[0].message.content).Strengths.join('\\n- ') }}\n\nweaknesses: ={{ JSON.parse($json.choices[0].message.content).Weaknesses.join('\\n- ') }}\n\nopportunities: ={{ JSON.parse($json.choices[0].message.content).Opportunities_for_Our_Company.join('\\n- ') }}\n\nthreats: ={{ JSON.parse($json.choices[0].message.content).Threats_to_Our_Company.join('\\n- ') }}\n\nsalesTalkingPoints: ={{ JSON.parse($json.choices[0].message.content).Actionable_Sales_Talking_Points_Suggestion.join('\\n- ') }}"
+      },
+      {
+        "parameters": {
+          "content": "## Flow",
+          "height": 768,
+          "width": 1488,
+          "color": 3
+        },
+        "id": "fe1c1f20-bda7-4bf3-9c35-ee8e21241218",
+        "name": "Sticky Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          368,
+          240
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "value": "models/gemini-3.8-flash",
+            "mode": "list",
+            "cachedResultName": "Gemini 3.8 Flash"
+          },
+          "messages": {
+            "values": [
+              {
+                "content": "You are an expert market intelligence analyst. Your task is to analyze raw data about IT companies and provide concise, actionable insights for a sales team."
+              },
+              {
+                "content": "=Analyze the following collected data about our competitor from various sources. Each data point is clearly labeled with its source.\n\nCollected Data:\n{{ $json.map(item => `- Source: ${item.json.source}\\n  Title: ${item.json.title}\\n  URL: ${item.json.url}\\n  Content: ${item.json.content}`).join('\\n\\n') }}\n\nBased on this, provide the following in a structured JSON format:\n1.  **Competitor Name:** (Identify the primary competitor if clear, or 'General Market Trends')\n2.  **Key Offerings/Features Identified:** (List new features, services, or product updates)\n3.  **Pricing/Promotions:** (Any pricing changes or ongoing promotions)\n4.  **Customer Sentiment (from reviews/feedback):** (Summarize overall sentiment: Positive, Negative, Mixed, with key reasons)\n5.  **Strengths:** (What are their identified strengths?)\n6.  **Weaknesses:** (What are their identified weaknesses or customer pain points?)\n7.  **Opportunities for Our Company:** (How can we leverage this info? New market segments, specific product angles, gaps we can fill)\n8.  **Threats to Our Company:** (What competitive actions should we be aware of?)\n9.  **Actionable Sales Talking Points Suggestion:** (3-5 concise bullet points for our sales team to use against this competitor or about market trends)\n\nEnsure the output is valid JSON."
+              }
+            ]
+          },
+          "builtInTools": {},
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.googleGemini",
+        "typeVersion": 1.2,
+        "position": [
+          1424,
+          432
+        ],
+        "id": "02c351bb-e176-4676-b9df-aad263c2e7f4",
+        "name": "Message a model",
+        "credentials": {
+          "googlePalmApi": {
+            "id": "lHOoVtIigKGUc6sV",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "value": "models/gemini-3.8-flash",
+            "mode": "list",
+            "cachedResultName": "Gemini 3.8 Flash"
+          },
+          "messages": {
+            "values": [
+              {
+                "content": "You are a sales coach. Based on the competitor insights provided and a specific sales context, generate highly personalized and persuasive talking points for a sales representative."
+              },
+              {
+                "content": "=Recent competitor insights for {{ $json.name }} show:\nStrengths: {{ $json.strengths }}\nWeaknesses: {{ $json.weaknesses }}\nNew Features: {{ $json.new_features }}\n\nOur product/service strengths are: [OUR_PRODUCT_USP_1], [OUR_PRODUCT_USP_2].\n\nThe current sales context is: We are pitching to a prospect who is currently using [COMPETITOR_NAME_FROM_CRM_CONTEXT] and values [PROSPECT_VALUE_1], [PROSPECT_VALUE_2].\n\nGenerate 3-5 concise, actionable sales talking points for our sales rep."
+              }
+            ]
+          },
+          "builtInTools": {},
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.googleGemini",
+        "typeVersion": 1.2,
+        "position": [
+          896,
+          768
+        ],
+        "id": "8dc54799-3ed4-4615-909e-67d90b74d3ca",
+        "name": "Message a model1",
+        "credentials": {
+          "googlePalmApi": {
+            "id": "lHOoVtIigKGUc6sV",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Apify": {
+        "main": [
+          [
+            {
+              "node": "Combine Data Sources",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Combine Data Sources": {
+        "main": [
+          [
+            {
+              "node": "Pre-process Data for AI",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch News & Blog RSS": {
+        "main": [
+          [
+            {
+              "node": "Combine Data Sources",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Pre-process Data for AI": {
+        "main": [
+          [
+            {
+              "node": "Message a model",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Scheduled Analysis Trigger": {
+        "main": [
+          [
+            {
+              "node": "Apify",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Fetch News & Blog RSS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Market Intelligence Report": {
+        "main": [
+          [
+            {
+              "node": "Message a model1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Message a model": {
+        "main": [
+          [
+            {
+              "node": "Generate Market Intelligence Report",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Himanshu Mahalle",
+    "name": "Ai driven market research ",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-11-12T17:38:29.221Z",
+        "id": 2,
+        "workflowId": "e2Iv28jnGdTNCImT",
+        "versionId": "aaba3714-11d5-4ea2-ba09-2bc52215c058",
+        "event": "activated",
+        "userId": "a3c49a99-bd5d-48aa-a36c-c31ca3b504a0"
+      }
+    ]
+  },
+  "homeProject": {
+    "id": "TPcXfn0POF6ou4oi",
+    "type": "personal",
+    "name": "Himanshu Mahalle <himanshumahalle3@gmail.com>",
+    "icon": null
+  },
+  "sharedWithProjects": [],
+  "usedCredentials": [
+    {
+      "id": "83Ui2B9M1d91XB8i",
+      "name": "Header Auth account",
+      "type": "httpHeaderAuth",
+      "currentUserCanUse": true,
+      "homeProject": {
+        "id": "TPcXfn0POF6ou4oi",
+        "type": "personal",
+        "name": "Himanshu Mahalle <himanshumahalle3@gmail.com>",
+        "icon": null
+      },
+      "sharedWithProjects": []
+    },
+    {
+      "id": "l4oGEQnvmg9aQ4b0",
+      "name": "Google Docs account",
+      "type": "googleDocsOAuth2Api",
+      "currentUserCanUse": true,
+      "homeProject": {
+        "id": "TPcXfn0POF6ou4oi",
+        "type": "personal",
+        "name": "Himanshu Mahalle <himanshumahalle3@gmail.com>",
+        "icon": null
+      },
+      "sharedWithProjects": []
+    },
+    {
+      "id": "lHOoVtIigKGUc6sV",
+      "name": "Google Gemini(PaLM) Api account",
+      "type": "googlePalmApi",
+      "currentUserCanUse": true,
+      "homeProject": {
+        "id": "TPcXfn0POF6ou4oi",
+        "type": "personal",
+        "name": "Himanshu Mahalle <himanshumahalle3@gmail.com>",
+        "icon": null
+      },
+      "sharedWithProjects": []
+    }
+  ],
+  "scopes": [
+    "execution:delete",
+    "execution:list",
+    "execution:read",
+    "execution:reveal",
+    "workflow:create",
+    "workflow:delete",
+    "workflow:disableRedaction",
+    "workflow:enableRedaction",
+    "workflow:execute",
+    "workflow:execute-chat",
+    "workflow:export",
+    "workflow:import",
+    "workflow:list",
+    "workflow:move",
+    "workflow:publish",
+    "workflow:read",
+    "workflow:share",
+    "workflow:unpublish",
+    "workflow:unshare",
+    "workflow:update"
+  ],
+  "checksum": "fc5c2c4df20577076f82843e4ffe27dd6cfd30bef6b4afbecf5445207c29e658"
+}
