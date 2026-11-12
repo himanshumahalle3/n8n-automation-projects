@@ -1,0 +1,1880 @@
+{
+  "updatedAt": "2026-11-12T15:54:25.502Z",
+  "createdAt": "2026-11-12T11:51:47.767Z",
+  "id": "H8JzmQzJT0jgI8pw",
+  "name": "Automate competitor research with Exa.ai, Notion and AI agents",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Try It Out!\n\n### This workflow builds a competitor research agent using Exa.ai as a starting point. The HTTP Request tool is used to demonstrate how you can build powerful agents with minimal effort.\n\n* Using Exa's findSimilar search, we ask it to look for similar companies ie. competitors, to our source company.\n* This list of competitors is sent to 3 agents to scour the internet to find company overview, product offering and customer reviews.\n* A report is then compiled from the output of all 3 agents into a notion table.\n\n### Need Help?\nJoin the [Discord](https://discord.com/invite/XPKeKXeB7d) or ask in the [Forum](https://community.n8n.io/)!\n\nHappy Hacking!",
+        "height": 511.2813260861502,
+        "width": 377.7154173079816
+      },
+      "id": "d26b0190-c683-45fc-ac5b-0654af78f080",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        368,
+        240
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {},
+      "id": "747d2f04-1e9c-45bb-b2ad-68da81524f4f",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        848,
+        448
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool to read the contents of a crunchbase profile.",
+        "url": "https://serpapi.com/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "serpApi",
+        "sendBody": true,
+        "parametersBody": {
+          "values": [
+            {
+              "name": "url"
+            },
+            {
+              "name": "pageOptions",
+              "valueProvider": "fieldValue",
+              "value": "={{ {\n  onlyMainContent: true,\n  replaceAllPathsWithAbsolutePaths: true,\n  removeTags: 'img,svg,video,audio'\n} }}"
+            }
+          ]
+        },
+        "optimizeResponse": true,
+        "dataField": "data",
+        "fieldsToInclude": "selected",
+        "fields": "markdown"
+      },
+      "id": "eafe20ab-0385-42e6-abbf-e15126bbb6fa",
+      "name": "Search Crunchbase",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "position": [
+        2688,
+        880
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "serpApi": {
+          "id": "Dj98sYXjOYlSNWk2",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"company_name\": \"\",\n  \"company_website\": \"\",\n  \"year_founded\": \"\",\n  \"founders\": [{ \"name\": \"\", \"linkedIn\": \"\" }],\n  \"ceo\": [{ \"name\": \"\", \"linkedIn\": \"\", \"twitter\": \"\" }],\n  \"key_people\": [{ \"name\": \"\", \"role\": \"\", \"linkedIn\": \"\", \"twitter\": \"\" }],\n  \"employees\": [{ \"name\": \"\", \"role\": \"\", \"linkedIn\": \"\", \"twitter\": \"\" }],\n  \"open_jobs\": [{ \"role\": \"\", \"description\": \"\", \"published\": \"\" }],\n  \"offices\": [{ \"address\": \"\", \"city\": \"\" }],\n  \"money_raised\": \"\",\n  \"funding_status\": \"\",\n  \"investors\": [{ \"name\": \"\", \"description\": \"\", \"linkedIn\": \"\" }],\n  \"customers\": [{ \"name\": \"\", \"url\": \"\" }],\n  \"yoy_customer_growth\": \"\",\n  \"annual_revenue\": \"\",\n  \"yoy_revenue_growth\": \"\",\n  \"latest_articles\": [{ \"title\": \"\", \"snippet\": \"\", \"url\": \"\", \"published_date\": \"\" }]\n}"
+      },
+      "id": "405fa211-436d-4601-bc3e-ad6e6d99886d",
+      "name": "Structured Output Parser1",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        2976,
+        880
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool to check if a company profile exists in either crunchbase, wellfound or linkedin.\n* To check if a company has a crunchbase profile, use the query \"site: https://crunchbase.com/organizations (company)\"\n* To check if a company has a wellfound profile, use the query \"site: https://wellfound.com/company (company)\"\n* To check if a company has a linked company profile, use the query \"site: https://linkedin.com/company (company)\"",
+        "url": "https://serpapi.com/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "serpApi",
+        "sendQuery": true,
+        "parametersQuery": {
+          "values": [
+            {
+              "name": "q"
+            }
+          ]
+        },
+        "optimizeResponse": true,
+        "dataField": "organic_results",
+        "fieldsToInclude": "selected",
+        "fields": "position,title,link,snippet,source"
+      },
+      "id": "f09112bc-65b5-4b6d-b568-eef95d064d45",
+      "name": "Check Company Profiles Exist",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "position": [
+        2544,
+        880
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "serpApi": {
+          "id": "Dj98sYXjOYlSNWk2",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool to query the company's profile website.\nExamples could include \"(company) pricing\", \"(company) plans\", \"(company) features\" etc",
+        "url": "https://serpapi.com/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "serpApi",
+        "sendQuery": true,
+        "parametersQuery": {
+          "values": [
+            {
+              "name": "q"
+            }
+          ]
+        },
+        "optimizeResponse": true,
+        "dataField": "organic_results",
+        "fieldsToInclude": "selected",
+        "fields": "position,title,link,snippet,source"
+      },
+      "id": "082b8e76-30b8-48f2-a581-a04a6f05c20d",
+      "name": "Search Company Website",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "position": [
+        3408,
+        816
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "serpApi": {
+          "id": "Dj98sYXjOYlSNWk2",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"features\": [{ \"name\": \"\", \"description\": \"\" }],\n  \"pricing_plans\": [{ \"name\": \"\", \"description\": \"\", \"tier\": \"\", \"price\": \"\", \"monthly_or_annually\": \"\" }],\n  \"factors_that_impact_price\": [{ \"factor\": \"\", \"description\": \"\" }],\n  \"discounts_promotions\": [{ \"offer\": \"\", \"start\": \"\", \"end\": \"\", \"description\": \"\" }],\n  \"custom_plans\": { \"is_available\": false, \"applicable_for\": \"\", \"price\": \"\", \"duration\": \"\", \"description\": \"\" },\n  \"free_trial\": { \"is_available\": false, \"applicable_for\": \"\", \"price\": \"\", \"duration\": \"\", \"description\": \"\" },\n  \"freemium_version\": { \"is_available\": false, \"applicable_for\": \"\", \"price\": \"\", \"duration\": \"\", \"description\": \"\" },\n  \"complementary_tools\": [{ \"name\": \"\", \"description\": \"\", \"price\": \"\" }],\n  \"techonology used\": [{ \"name\": \"\", \"description\": \"\", \"purpose\": \"\" }]\n}"
+      },
+      "id": "ca3140c5-b4ff-41d5-b0a1-b2595e1fc789",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        3696,
+        816
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool to search for customer reviews for the desired company or their product/service.",
+        "url": "https://serpapi.com/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "serpApi",
+        "sendQuery": true,
+        "parametersQuery": {
+          "values": [
+            {
+              "name": "q",
+              "valueProvider": "fieldValue",
+              "value": "{company_or_product} reviews (site:trustpilot.com OR site:producthunt.com)"
+            },
+            {
+              "name": "num",
+              "valueProvider": "fieldValue",
+              "value": "3"
+            }
+          ]
+        },
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "company_or_product",
+              "description": "the name of the company or their product to search for reviews for"
+            }
+          ]
+        },
+        "optimizeResponse": true,
+        "dataField": "organic_results",
+        "fieldsToInclude": "selected",
+        "fields": "position,title,link,snippet,source"
+      },
+      "id": "299920bb-194b-4a95-8822-c0f6d559dd15",
+      "name": "Search Product Review Sites",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "position": [
+        4128,
+        880
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "serpApi": {
+          "id": "Dj98sYXjOYlSNWk2",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"number_of_reviews\": 0,\n  \"positive_mentions_%\": \"\",\n  \"negative_mentions_%\": \"\",\n  \"top_pros\": [\"\"],\n  \"top_cons\": [\"\"],\n  \"top_countries\": [\"\"],\n  \"top_social_media_platforms\": [\"\"]\n}"
+      },
+      "id": "c13f23fd-77b9-4f4c-bdc6-50120ed84cbd",
+      "name": "Structured Output Parser2",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        4400,
+        880
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool to search for the latest news articles of a company.",
+        "url": "https://serpapi.com/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "serpApi",
+        "sendBody": true,
+        "parametersBody": {
+          "values": [
+            {
+              "name": "q"
+            },
+            {
+              "name": "engine",
+              "valueProvider": "fieldValue",
+              "value": "google_news"
+            }
+          ]
+        },
+        "optimizeResponse": true,
+        "dataField": "organic_results",
+        "fieldsToInclude": "selected",
+        "fields": "position,title,link,snippet,source"
+      },
+      "id": "dae53670-bafb-4dff-95e7-cc94adf5f344",
+      "name": "Get Company News",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "position": [
+        2848,
+        896
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "serpApi": {
+          "id": "Dj98sYXjOYlSNWk2",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Step 1. Get Competitors\n[Read more about using the HTTP Request node](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest)\n\nExa.ai is a relatively new AI search engine startup with a specialised API for finding similar companies.\nThis is perfect for marketing research as we can easily find competitors to compare against.",
+        "height": 582.8537144476434,
+        "width": 1128.870960716006,
+        "color": 7
+      },
+      "id": "84809359-06c8-41d9-8269-571cac716d17",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        800,
+        288
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3910089f-065d-4f05-a3b7-a5b848b91eb9",
+              "name": "company_url",
+              "type": "string",
+              "value": "=https://notion.so"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d43e8b2a-53dd-41db-aacd-f3fdd29d8fe9",
+      "name": "Set Source Company",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1072,
+        448
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### 🚨Required!\nRemember to set your company here.",
+        "height": 308.12010511833364,
+        "width": 181.85939799093455
+      },
+      "id": "1c28b108-dc18-4304-aed9-275e719c4edd",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1024,
+        416
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Step 2. Feed into Agent Pipeline\n[Learn more about loops](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.splitinbatches)\n\nA loop is used to ensure competitors are processed one at a time. This is ideal when we don't want errors to fail the entire pipeline.",
+        "height": 492.4668447935363,
+        "width": 332.87733508600377,
+        "color": 7
+      },
+      "id": "5cb54393-795b-4738-aac2-cc9395456420",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1936,
+        336
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Step 4. Research Competitor Product Offering\n[Learn more about using AI Agents](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent)\n\nThis agent uses SERPAPI to discover the competitor's product pages. Once found, it will use the webscraping tool to fetch the page's contents to extract the necessary data points.",
+        "height": 600.1548730999224,
+        "width": 687.9856526661888,
+        "color": 7
+      },
+      "id": "4cdddfd1-8631-4d88-a65d-10a53daeaf78",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3168,
+        448
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Step 3. Discover Competitor Company and Funding Overview\n[Learn more about using AI Agents](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent)\n\nThis agent searches crunchbase.com, wellfound.com and linkedin.com for the competitor's company details, people data, funding activity and latest news.",
+        "height": 775.191233831828,
+        "width": 849.3810544357925,
+        "color": 7
+      },
+      "id": "3a374ce6-0ae0-4f8e-ad6a-35ab2c8da211",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2288,
+        416
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Step 5. Capture Competitor Product Reviews\n[Learn more about using AI Agents](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent)\n\nThis agent uses SERPAPI to discover product reviews for the competitor's product or service and then summarises the pros and cons.",
+        "height": 633.9023021841829,
+        "width": 683.8444841203574,
+        "color": 7
+      },
+      "id": "fa580430-d6c6-4d41-b0f9-c86ad89dc6ab",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3888,
+        464
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3c58a9dd-28c5-4758-a362-d5b29f6a8204",
+              "name": "output",
+              "type": "object",
+              "value": "={{\n {\n    ...$('Company Overview Agent').item.json.output,\n    ...$('Company Product Offering Agent').item.json.output,\n    ...$('Company Product Reviews Agent').item.json.output,\n }\n}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b050b11f-9b4f-4ed1-94b9-3ec69a1ceba7",
+      "name": "Collect Results",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        4704,
+        624
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "content": "## Step 6. Collect Results and Send to Notion\n[Read more about using Notion](https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.notion)\n\nFinally, once the agent's have completed their tasks successfully, we compiled a competitor report and insert it as a new row in our Notion table.\nYou can check out a copy of this table here: https://jimleuk.notion.site/2d1c3c726e8e42f3aecec6338fd24333?v=de020fa196f34cdeb676daaeae44e110&pvs=4",
+        "height": 572.5257167828777,
+        "width": 529.1065295866968,
+        "color": 7
+      },
+      "id": "1fc6468e-8a89-4a37-a8d6-1fe94c274b3a",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4592,
+        384
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "id": "863c40c7-e56d-464f-8105-0cb151654715",
+      "name": "2sec",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        5056,
+        1136
+      ],
+      "webhookId": "94b5b09f-0599-4585-b83b-f669726bc2ef",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Loop Over Items').item.json.url }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Your role is a company researcher agent. Your goal is to research and discover the following information about a company:\n* Year founded\n* Founder(s)\n* CEO\n* Key people\n* Employees\n* Open jobs\n* Offices\n* Money raised\n* Funding status\n* Investors\n* Customers\n* YoY customer growth\n* Annual revenue\n* YoY revenue growth\n* Latest articles\n\n## Steps\n1. check if the company's crunchbase profile exists and if it does read the profile page to gather the required information. If you are able to satisfies all data points from the profile, then do not return your response.\n2. repeat step 1 for wellfound if there are missing data points on the crunchbase profile.\n3. repeat step 1 for linkedin if there are missing data points on the wellfound profile.\n4. If there are still missing datapoints after checking cruchbase, wellfound and linkedin then just give up and return your response.\n\nIf a data point is not found after completing all the above steps, do not use null values in your final response. Use either an empty array, object or string depending on the required schema for the data point.\nDo not retry any link that returns a 400,401,403 or 500 error code."
+        }
+      },
+      "id": "c1a4b720-f56b-4c3a-aeca-a89f473132f4",
+      "name": "Company Overview Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        2384,
+        656
+      ],
+      "typeVersion": 1.6
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Loop Over Items').item.json.url }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Your role is company product/service researcher. Your goal is to search and collect the following information:\n* features sets\n* number of pricing plans\n* Factors that impact price\n* Lowest-tier, Mid-tier and Highest-tier price\n* Custom plans if available\n* Discounts & promotions offered currently\n* whether a Free trial is offered\n* description of freemium version if available\n* Complementary tools offered\n* technology used\n\n# steps\n1. Search for the relevant webpage on the company's website. This search should return a url address.\n2. Use this url address with the webscraper tool to fetch the contents of the webpage.\n3. Use the contents of th webpage to populate the data points.\n\nIf a data point is not found after completing all the above steps, do not use null values in your final response. Use either an empty array, object or string depending on the required schema for the data point.\nDo not retry any link that returns a 400,401,403 or 500 error code."
+        }
+      },
+      "id": "1070c7f0-544a-478b-bd97-df8f2c0d79fa",
+      "name": "Company Product Offering Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        3264,
+        624
+      ],
+      "typeVersion": 1.6
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Loop Over Items').item.json.url }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Your role is customer reviews agent. Your goal is to gather and collect online customer reviews for a company or their product or service.\n* number of reviews\n* Positive mentions, %\n* Negative mentions, %\n* Top pros\n* Top cons\n* Top countries\n* Top social media platforms\n\n## steps\n1. search for review sites that may have reviews for the company or product in question. retrieve the links or urls of the serch results where the reviews are found.\n2. Identify relevant items in the search result and and extract the urls from the search results.\n2. using the extracted urls from the search results, fetch the webpage of the review sites containing reviews for the company or product.\n3. extract the reviews from the fetched review sites to populate the required data points.\n\nIf a data point is not found after completing all the above steps, do not use null values in your final response. Use either an empty array, object or string depending on the required schema for the data point.\nDo not retry any link that returns a 400,401,403 or 500 error code."
+        }
+      },
+      "id": "5dec7033-5057-483f-930d-e950b6eabe05",
+      "name": "Company Product Reviews Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        3984,
+        656
+      ],
+      "typeVersion": 1.6
+    },
+    {
+      "parameters": {
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### 🚨Required!\nRemember to set your Notion Database here.",
+        "height": 308.12010511833364,
+        "width": 181.85939799093455
+      },
+      "id": "787bb405-1744-43b7-8c47-1a2c23331e05",
+      "name": "Sticky Note8",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4848,
+        608
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "folderId": "1eTHbduy-YuLqJIarolV7NsHbSKn6vyaH",
+        "title": "competitor_reserach"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        4896,
+        624
+      ],
+      "id": "b1ca8739-834c-47fc-a9d9-e09c16fe43c0",
+      "name": "Create a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "l4oGEQnvmg9aQ4b0",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "query": "=competitors of {{$json.company_url}}",
+        "numResults": 5,
+        "contents": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-exa-official.exa",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        448
+      ],
+      "id": "9aedced1-8d3d-4956-8c58-69856dfa9eaa",
+      "name": "Search the web",
+      "credentials": {
+        "exaApi": {
+          "id": "J1ecGTaF7NwrY67T",
+          "name": "Exa account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        2384,
+        848
+      ],
+      "id": "9a0f2210-0812-4811-a8cd-d12a86ea23bc",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "lHOoVtIigKGUc6sV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        3248,
+        816
+      ],
+      "id": "9c433376-ae50-40d4-b2f7-6ccfc6eb2c4f",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "lHOoVtIigKGUc6sV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        3984,
+        864
+      ],
+      "id": "44c98936-0646-4999-8972-7dc351b9dedc",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "lHOoVtIigKGUc6sV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "2f25cf2e-86c6-4d23-a1ae-cc35134f0d8a",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        2048,
+        576
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2208,
+        688
+      ],
+      "id": "5f508fce-1cdd-45e6-8b08-3f458eda9382",
+      "name": "Wait",
+      "webhookId": "a0e26250-d7e5-4a3b-89cd-2567fd1bb254"
+    }
+  ],
+  "connections": {
+    "2sec": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Results": {
+      "main": [
+        [
+          {
+            "node": "Create a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Company News": {
+      "ai_tool": [
+        [
+          {
+            "node": "Company Overview Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Crunchbase": {
+      "ai_tool": [
+        [
+          {
+            "node": "Company Overview Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Source Company": {
+      "main": [
+        [
+          {
+            "node": "Search the web",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Overview Agent": {
+      "main": [
+        [
+          {
+            "node": "Company Product Offering Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Company Website": {
+      "ai_tool": [
+        [
+          {
+            "node": "Company Product Offering Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Company Product Offering Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Company Overview Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Company Product Reviews Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Product Review Sites": {
+      "ai_tool": [
+        [
+          {
+            "node": "Company Product Reviews Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Company Profiles Exist": {
+      "ai_tool": [
+        [
+          {
+            "node": "Company Overview Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Product Reviews Agent": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Product Offering Agent": {
+      "main": [
+        [
+          {
+            "node": "Company Product Reviews Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Set Source Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a document": {
+      "main": [
+        [
+          {
+            "node": "2sec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search the web": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Company Overview Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Company Product Offering Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Company Product Reviews Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Company Overview Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "templateId": "2354",
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "d513429d-6dd0-4937-b98b-81d5f2190a71",
+  "activeVersionId": "d513429d-6dd0-4937-b98b-81d5f2190a71",
+  "versionCounter": 74,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "parentFolder": null,
+  "activeVersion": {
+    "updatedAt": "2026-11-12T16:00:41.000Z",
+    "createdAt": "2026-11-12T15:54:25.504Z",
+    "versionId": "d513429d-6dd0-4937-b98b-81d5f2190a71",
+    "workflowId": "H8JzmQzJT0jgI8pw",
+    "nodes": [
+      {
+        "parameters": {
+          "content": "## Try It Out!\n\n### This workflow builds a competitor research agent using Exa.ai as a starting point. The HTTP Request tool is used to demonstrate how you can build powerful agents with minimal effort.\n\n* Using Exa's findSimilar search, we ask it to look for similar companies ie. competitors, to our source company.\n* This list of competitors is sent to 3 agents to scour the internet to find company overview, product offering and customer reviews.\n* A report is then compiled from the output of all 3 agents into a notion table.\n\n### Need Help?\nJoin the [Discord](https://discord.com/invite/XPKeKXeB7d) or ask in the [Forum](https://community.n8n.io/)!\n\nHappy Hacking!",
+          "height": 511.2813260861502,
+          "width": 377.7154173079816
+        },
+        "id": "d26b0190-c683-45fc-ac5b-0654af78f080",
+        "name": "Sticky Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          368,
+          240
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {},
+        "id": "747d2f04-1e9c-45bb-b2ad-68da81524f4f",
+        "name": "When clicking ‘Test workflow’",
+        "type": "n8n-nodes-base.manualTrigger",
+        "position": [
+          848,
+          448
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "toolDescription": "Call this tool to read the contents of a crunchbase profile.",
+          "url": "https://serpapi.com/search",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "serpApi",
+          "sendBody": true,
+          "parametersBody": {
+            "values": [
+              {
+                "name": "url"
+              },
+              {
+                "name": "pageOptions",
+                "valueProvider": "fieldValue",
+                "value": "={{ {\n  onlyMainContent: true,\n  replaceAllPathsWithAbsolutePaths: true,\n  removeTags: 'img,svg,video,audio'\n} }}"
+              }
+            ]
+          },
+          "optimizeResponse": true,
+          "dataField": "data",
+          "fieldsToInclude": "selected",
+          "fields": "markdown"
+        },
+        "id": "eafe20ab-0385-42e6-abbf-e15126bbb6fa",
+        "name": "Search Crunchbase",
+        "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+        "position": [
+          2688,
+          880
+        ],
+        "typeVersion": 1,
+        "credentials": {
+          "serpApi": {
+            "id": "Dj98sYXjOYlSNWk2",
+            "name": "SerpAPI account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "{\n  \"company_name\": \"\",\n  \"company_website\": \"\",\n  \"year_founded\": \"\",\n  \"founders\": [{ \"name\": \"\", \"linkedIn\": \"\" }],\n  \"ceo\": [{ \"name\": \"\", \"linkedIn\": \"\", \"twitter\": \"\" }],\n  \"key_people\": [{ \"name\": \"\", \"role\": \"\", \"linkedIn\": \"\", \"twitter\": \"\" }],\n  \"employees\": [{ \"name\": \"\", \"role\": \"\", \"linkedIn\": \"\", \"twitter\": \"\" }],\n  \"open_jobs\": [{ \"role\": \"\", \"description\": \"\", \"published\": \"\" }],\n  \"offices\": [{ \"address\": \"\", \"city\": \"\" }],\n  \"money_raised\": \"\",\n  \"funding_status\": \"\",\n  \"investors\": [{ \"name\": \"\", \"description\": \"\", \"linkedIn\": \"\" }],\n  \"customers\": [{ \"name\": \"\", \"url\": \"\" }],\n  \"yoy_customer_growth\": \"\",\n  \"annual_revenue\": \"\",\n  \"yoy_revenue_growth\": \"\",\n  \"latest_articles\": [{ \"title\": \"\", \"snippet\": \"\", \"url\": \"\", \"published_date\": \"\" }]\n}"
+        },
+        "id": "405fa211-436d-4601-bc3e-ad6e6d99886d",
+        "name": "Structured Output Parser1",
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "position": [
+          2976,
+          880
+        ],
+        "typeVersion": 1.2
+      },
+      {
+        "parameters": {
+          "toolDescription": "Call this tool to check if a company profile exists in either crunchbase, wellfound or linkedin.\n* To check if a company has a crunchbase profile, use the query \"site: https://crunchbase.com/organizations (company)\"\n* To check if a company has a wellfound profile, use the query \"site: https://wellfound.com/company (company)\"\n* To check if a company has a linked company profile, use the query \"site: https://linkedin.com/company (company)\"",
+          "url": "https://serpapi.com/search",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "serpApi",
+          "sendQuery": true,
+          "parametersQuery": {
+            "values": [
+              {
+                "name": "q"
+              }
+            ]
+          },
+          "optimizeResponse": true,
+          "dataField": "organic_results",
+          "fieldsToInclude": "selected",
+          "fields": "position,title,link,snippet,source"
+        },
+        "id": "f09112bc-65b5-4b6d-b568-eef95d064d45",
+        "name": "Check Company Profiles Exist",
+        "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+        "position": [
+          2544,
+          880
+        ],
+        "typeVersion": 1,
+        "credentials": {
+          "serpApi": {
+            "id": "Dj98sYXjOYlSNWk2",
+            "name": "SerpAPI account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "toolDescription": "Call this tool to query the company's profile website.\nExamples could include \"(company) pricing\", \"(company) plans\", \"(company) features\" etc",
+          "url": "https://serpapi.com/search",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "serpApi",
+          "sendQuery": true,
+          "parametersQuery": {
+            "values": [
+              {
+                "name": "q"
+              }
+            ]
+          },
+          "optimizeResponse": true,
+          "dataField": "organic_results",
+          "fieldsToInclude": "selected",
+          "fields": "position,title,link,snippet,source"
+        },
+        "id": "082b8e76-30b8-48f2-a581-a04a6f05c20d",
+        "name": "Search Company Website",
+        "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+        "position": [
+          3408,
+          816
+        ],
+        "typeVersion": 1,
+        "credentials": {
+          "serpApi": {
+            "id": "Dj98sYXjOYlSNWk2",
+            "name": "SerpAPI account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "{\n  \"features\": [{ \"name\": \"\", \"description\": \"\" }],\n  \"pricing_plans\": [{ \"name\": \"\", \"description\": \"\", \"tier\": \"\", \"price\": \"\", \"monthly_or_annually\": \"\" }],\n  \"factors_that_impact_price\": [{ \"factor\": \"\", \"description\": \"\" }],\n  \"discounts_promotions\": [{ \"offer\": \"\", \"start\": \"\", \"end\": \"\", \"description\": \"\" }],\n  \"custom_plans\": { \"is_available\": false, \"applicable_for\": \"\", \"price\": \"\", \"duration\": \"\", \"description\": \"\" },\n  \"free_trial\": { \"is_available\": false, \"applicable_for\": \"\", \"price\": \"\", \"duration\": \"\", \"description\": \"\" },\n  \"freemium_version\": { \"is_available\": false, \"applicable_for\": \"\", \"price\": \"\", \"duration\": \"\", \"description\": \"\" },\n  \"complementary_tools\": [{ \"name\": \"\", \"description\": \"\", \"price\": \"\" }],\n  \"techonology used\": [{ \"name\": \"\", \"description\": \"\", \"purpose\": \"\" }]\n}"
+        },
+        "id": "ca3140c5-b4ff-41d5-b0a1-b2595e1fc789",
+        "name": "Structured Output Parser",
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "position": [
+          3696,
+          816
+        ],
+        "typeVersion": 1.2
+      },
+      {
+        "parameters": {
+          "toolDescription": "Call this tool to search for customer reviews for the desired company or their product/service.",
+          "url": "https://serpapi.com/search",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "serpApi",
+          "sendQuery": true,
+          "parametersQuery": {
+            "values": [
+              {
+                "name": "q",
+                "valueProvider": "fieldValue",
+                "value": "{company_or_product} reviews (site:trustpilot.com OR site:producthunt.com)"
+              },
+              {
+                "name": "num",
+                "valueProvider": "fieldValue",
+                "value": "3"
+              }
+            ]
+          },
+          "placeholderDefinitions": {
+            "values": [
+              {
+                "name": "company_or_product",
+                "description": "the name of the company or their product to search for reviews for"
+              }
+            ]
+          },
+          "optimizeResponse": true,
+          "dataField": "organic_results",
+          "fieldsToInclude": "selected",
+          "fields": "position,title,link,snippet,source"
+        },
+        "id": "299920bb-194b-4a95-8822-c0f6d559dd15",
+        "name": "Search Product Review Sites",
+        "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+        "position": [
+          4128,
+          880
+        ],
+        "typeVersion": 1,
+        "credentials": {
+          "serpApi": {
+            "id": "Dj98sYXjOYlSNWk2",
+            "name": "SerpAPI account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsonSchemaExample": "{\n  \"number_of_reviews\": 0,\n  \"positive_mentions_%\": \"\",\n  \"negative_mentions_%\": \"\",\n  \"top_pros\": [\"\"],\n  \"top_cons\": [\"\"],\n  \"top_countries\": [\"\"],\n  \"top_social_media_platforms\": [\"\"]\n}"
+        },
+        "id": "c13f23fd-77b9-4f4c-bdc6-50120ed84cbd",
+        "name": "Structured Output Parser2",
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "position": [
+          4400,
+          880
+        ],
+        "typeVersion": 1.2
+      },
+      {
+        "parameters": {
+          "toolDescription": "Call this tool to search for the latest news articles of a company.",
+          "url": "https://serpapi.com/search",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "serpApi",
+          "sendBody": true,
+          "parametersBody": {
+            "values": [
+              {
+                "name": "q"
+              },
+              {
+                "name": "engine",
+                "valueProvider": "fieldValue",
+                "value": "google_news"
+              }
+            ]
+          },
+          "optimizeResponse": true,
+          "dataField": "organic_results",
+          "fieldsToInclude": "selected",
+          "fields": "position,title,link,snippet,source"
+        },
+        "id": "dae53670-bafb-4dff-95e7-cc94adf5f344",
+        "name": "Get Company News",
+        "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+        "position": [
+          2848,
+          896
+        ],
+        "typeVersion": 1,
+        "credentials": {
+          "serpApi": {
+            "id": "Dj98sYXjOYlSNWk2",
+            "name": "SerpAPI account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "content": "## Step 1. Get Competitors\n[Read more about using the HTTP Request node](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest)\n\nExa.ai is a relatively new AI search engine startup with a specialised API for finding similar companies.\nThis is perfect for marketing research as we can easily find competitors to compare against.",
+          "height": 582.8537144476434,
+          "width": 1128.870960716006,
+          "color": 7
+        },
+        "id": "84809359-06c8-41d9-8269-571cac716d17",
+        "name": "Sticky Note1",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          800,
+          288
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "3910089f-065d-4f05-a3b7-a5b848b91eb9",
+                "name": "company_url",
+                "type": "string",
+                "value": "=https://notion.so"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "d43e8b2a-53dd-41db-aacd-f3fdd29d8fe9",
+        "name": "Set Source Company",
+        "type": "n8n-nodes-base.set",
+        "position": [
+          1072,
+          448
+        ],
+        "typeVersion": 3.4
+      },
+      {
+        "parameters": {
+          "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### 🚨Required!\nRemember to set your company here.",
+          "height": 308.12010511833364,
+          "width": 181.85939799093455
+        },
+        "id": "1c28b108-dc18-4304-aed9-275e719c4edd",
+        "name": "Sticky Note2",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1024,
+          416
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "content": "## Step 2. Feed into Agent Pipeline\n[Learn more about loops](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.splitinbatches)\n\nA loop is used to ensure competitors are processed one at a time. This is ideal when we don't want errors to fail the entire pipeline.",
+          "height": 492.4668447935363,
+          "width": 332.87733508600377,
+          "color": 7
+        },
+        "id": "5cb54393-795b-4738-aac2-cc9395456420",
+        "name": "Sticky Note3",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1936,
+          336
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "content": "## Step 4. Research Competitor Product Offering\n[Learn more about using AI Agents](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent)\n\nThis agent uses SERPAPI to discover the competitor's product pages. Once found, it will use the webscraping tool to fetch the page's contents to extract the necessary data points.",
+          "height": 600.1548730999224,
+          "width": 687.9856526661888,
+          "color": 7
+        },
+        "id": "4cdddfd1-8631-4d88-a65d-10a53daeaf78",
+        "name": "Sticky Note4",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          3168,
+          448
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "content": "## Step 3. Discover Competitor Company and Funding Overview\n[Learn more about using AI Agents](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent)\n\nThis agent searches crunchbase.com, wellfound.com and linkedin.com for the competitor's company details, people data, funding activity and latest news.",
+          "height": 775.191233831828,
+          "width": 849.3810544357925,
+          "color": 7
+        },
+        "id": "3a374ce6-0ae0-4f8e-ad6a-35ab2c8da211",
+        "name": "Sticky Note5",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          2288,
+          416
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "content": "## Step 5. Capture Competitor Product Reviews\n[Learn more about using AI Agents](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent)\n\nThis agent uses SERPAPI to discover product reviews for the competitor's product or service and then summarises the pros and cons.",
+          "height": 633.9023021841829,
+          "width": 683.8444841203574,
+          "color": 7
+        },
+        "id": "fa580430-d6c6-4d41-b0f9-c86ad89dc6ab",
+        "name": "Sticky Note6",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          3888,
+          464
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "3c58a9dd-28c5-4758-a362-d5b29f6a8204",
+                "name": "output",
+                "type": "object",
+                "value": "={{\n {\n    ...$('Company Overview Agent').item.json.output,\n    ...$('Company Product Offering Agent').item.json.output,\n    ...$('Company Product Reviews Agent').item.json.output,\n }\n}}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "b050b11f-9b4f-4ed1-94b9-3ec69a1ceba7",
+        "name": "Collect Results",
+        "type": "n8n-nodes-base.set",
+        "position": [
+          4704,
+          624
+        ],
+        "typeVersion": 3.4
+      },
+      {
+        "parameters": {
+          "content": "## Step 6. Collect Results and Send to Notion\n[Read more about using Notion](https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.notion)\n\nFinally, once the agent's have completed their tasks successfully, we compiled a competitor report and insert it as a new row in our Notion table.\nYou can check out a copy of this table here: https://jimleuk.notion.site/2d1c3c726e8e42f3aecec6338fd24333?v=de020fa196f34cdeb676daaeae44e110&pvs=4",
+          "height": 572.5257167828777,
+          "width": 529.1065295866968,
+          "color": 7
+        },
+        "id": "1fc6468e-8a89-4a37-a8d6-1fe94c274b3a",
+        "name": "Sticky Note7",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          4592,
+          384
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "amount": 15
+        },
+        "id": "863c40c7-e56d-464f-8105-0cb151654715",
+        "name": "2sec",
+        "type": "n8n-nodes-base.wait",
+        "position": [
+          5056,
+          1136
+        ],
+        "webhookId": "94b5b09f-0599-4585-b83b-f669726bc2ef",
+        "typeVersion": 1.1
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $('Loop Over Items').item.json.url }}",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "Your role is a company researcher agent. Your goal is to research and discover the following information about a company:\n* Year founded\n* Founder(s)\n* CEO\n* Key people\n* Employees\n* Open jobs\n* Offices\n* Money raised\n* Funding status\n* Investors\n* Customers\n* YoY customer growth\n* Annual revenue\n* YoY revenue growth\n* Latest articles\n\n## Steps\n1. check if the company's crunchbase profile exists and if it does read the profile page to gather the required information. If you are able to satisfies all data points from the profile, then do not return your response.\n2. repeat step 1 for wellfound if there are missing data points on the crunchbase profile.\n3. repeat step 1 for linkedin if there are missing data points on the wellfound profile.\n4. If there are still missing datapoints after checking cruchbase, wellfound and linkedin then just give up and return your response.\n\nIf a data point is not found after completing all the above steps, do not use null values in your final response. Use either an empty array, object or string depending on the required schema for the data point.\nDo not retry any link that returns a 400,401,403 or 500 error code."
+          }
+        },
+        "id": "c1a4b720-f56b-4c3a-aeca-a89f473132f4",
+        "name": "Company Overview Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "position": [
+          2384,
+          656
+        ],
+        "typeVersion": 1.6
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $('Loop Over Items').item.json.url }}",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "Your role is company product/service researcher. Your goal is to search and collect the following information:\n* features sets\n* number of pricing plans\n* Factors that impact price\n* Lowest-tier, Mid-tier and Highest-tier price\n* Custom plans if available\n* Discounts & promotions offered currently\n* whether a Free trial is offered\n* description of freemium version if available\n* Complementary tools offered\n* technology used\n\n# steps\n1. Search for the relevant webpage on the company's website. This search should return a url address.\n2. Use this url address with the webscraper tool to fetch the contents of the webpage.\n3. Use the contents of th webpage to populate the data points.\n\nIf a data point is not found after completing all the above steps, do not use null values in your final response. Use either an empty array, object or string depending on the required schema for the data point.\nDo not retry any link that returns a 400,401,403 or 500 error code."
+          }
+        },
+        "id": "1070c7f0-544a-478b-bd97-df8f2c0d79fa",
+        "name": "Company Product Offering Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "position": [
+          3264,
+          624
+        ],
+        "typeVersion": 1.6
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $('Loop Over Items').item.json.url }}",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "Your role is customer reviews agent. Your goal is to gather and collect online customer reviews for a company or their product or service.\n* number of reviews\n* Positive mentions, %\n* Negative mentions, %\n* Top pros\n* Top cons\n* Top countries\n* Top social media platforms\n\n## steps\n1. search for review sites that may have reviews for the company or product in question. retrieve the links or urls of the serch results where the reviews are found.\n2. Identify relevant items in the search result and and extract the urls from the search results.\n2. using the extracted urls from the search results, fetch the webpage of the review sites containing reviews for the company or product.\n3. extract the reviews from the fetched review sites to populate the required data points.\n\nIf a data point is not found after completing all the above steps, do not use null values in your final response. Use either an empty array, object or string depending on the required schema for the data point.\nDo not retry any link that returns a 400,401,403 or 500 error code."
+          }
+        },
+        "id": "5dec7033-5057-483f-930d-e950b6eabe05",
+        "name": "Company Product Reviews Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "position": [
+          3984,
+          656
+        ],
+        "typeVersion": 1.6
+      },
+      {
+        "parameters": {
+          "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### 🚨Required!\nRemember to set your Notion Database here.",
+          "height": 308.12010511833364,
+          "width": 181.85939799093455
+        },
+        "id": "787bb405-1744-43b7-8c47-1a2c23331e05",
+        "name": "Sticky Note8",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          4848,
+          608
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "folderId": "1eTHbduy-YuLqJIarolV7NsHbSKn6vyaH",
+          "title": "competitor_reserach"
+        },
+        "type": "n8n-nodes-base.googleDocs",
+        "typeVersion": 2,
+        "position": [
+          4896,
+          624
+        ],
+        "id": "b1ca8739-834c-47fc-a9d9-e09c16fe43c0",
+        "name": "Create a document",
+        "credentials": {
+          "googleDocsOAuth2Api": {
+            "id": "l4oGEQnvmg9aQ4b0",
+            "name": "Google Docs account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "query": "=competitors of {{$json.company_url}}",
+          "numResults": 5,
+          "contents": {},
+          "options": {}
+        },
+        "type": "n8n-nodes-exa-official.exa",
+        "typeVersion": 2,
+        "position": [
+          1296,
+          448
+        ],
+        "id": "9aedced1-8d3d-4956-8c58-69856dfa9eaa",
+        "name": "Search the web",
+        "credentials": {
+          "exaApi": {
+            "id": "J1ecGTaF7NwrY67T",
+            "name": "Exa account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "modelName": "models/gemini-2.5-flash",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+        "typeVersion": 1.2,
+        "position": [
+          2384,
+          848
+        ],
+        "id": "9a0f2210-0812-4811-a8cd-d12a86ea23bc",
+        "name": "Google Gemini Chat Model",
+        "credentials": {
+          "googlePalmApi": {
+            "id": "lHOoVtIigKGUc6sV",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+        "typeVersion": 1.2,
+        "position": [
+          3248,
+          816
+        ],
+        "id": "9c433376-ae50-40d4-b2f7-6ccfc6eb2c4f",
+        "name": "Google Gemini Chat Model1",
+        "credentials": {
+          "googlePalmApi": {
+            "id": "lHOoVtIigKGUc6sV",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+        "typeVersion": 1.2,
+        "position": [
+          3984,
+          864
+        ],
+        "id": "44c98936-0646-4999-8972-7dc351b9dedc",
+        "name": "Google Gemini Chat Model2",
+        "credentials": {
+          "googlePalmApi": {
+            "id": "lHOoVtIigKGUc6sV",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "2f25cf2e-86c6-4d23-a1ae-cc35134f0d8a",
+        "name": "Loop Over Items",
+        "type": "n8n-nodes-base.splitInBatches",
+        "position": [
+          2048,
+          576
+        ],
+        "typeVersion": 3
+      },
+      {
+        "parameters": {
+          "amount": 15
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          2208,
+          688
+        ],
+        "id": "5f508fce-1cdd-45e6-8b08-3f458eda9382",
+        "name": "Wait",
+        "webhookId": "a0e26250-d7e5-4a3b-89cd-2567fd1bb254"
+      }
+    ],
+    "connections": {
+      "2sec": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Collect Results": {
+        "main": [
+          [
+            {
+              "node": "Create a document",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Company News": {
+        "ai_tool": [
+          [
+            {
+              "node": "Company Overview Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Search Crunchbase": {
+        "ai_tool": [
+          [
+            {
+              "node": "Company Overview Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set Source Company": {
+        "main": [
+          [
+            {
+              "node": "Search the web",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Company Overview Agent": {
+        "main": [
+          [
+            {
+              "node": "Company Product Offering Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Search Company Website": {
+        "ai_tool": [
+          [
+            {
+              "node": "Company Product Offering Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Structured Output Parser": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Company Product Offering Agent",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Structured Output Parser1": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Company Overview Agent",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Structured Output Parser2": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Company Product Reviews Agent",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Search Product Review Sites": {
+        "ai_tool": [
+          [
+            {
+              "node": "Company Product Reviews Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Company Profiles Exist": {
+        "ai_tool": [
+          [
+            {
+              "node": "Company Overview Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Company Product Reviews Agent": {
+        "main": [
+          [
+            {
+              "node": "Collect Results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Company Product Offering Agent": {
+        "main": [
+          [
+            {
+              "node": "Company Product Reviews Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When clicking ‘Test workflow’": {
+        "main": [
+          [
+            {
+              "node": "Set Source Company",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create a document": {
+        "main": [
+          [
+            {
+              "node": "2sec",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Search the web": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Gemini Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Company Overview Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Gemini Chat Model1": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Company Product Offering Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Gemini Chat Model2": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Company Product Reviews Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Items": {
+        "main": [
+          [],
+          [
+            {
+              "node": "Wait",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait": {
+        "main": [
+          [
+            {
+              "node": "Company Overview Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Himanshu Mahalle",
+    "name": "Autonomous Competitive Intelligence & Teardown Agent",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-11-12T16:00:41.670Z",
+        "id": 1,
+        "workflowId": "H8JzmQzJT0jgI8pw",
+        "versionId": "d513429d-6dd0-4937-b98b-81d5f2190a71",
+        "event": "activated",
+        "userId": "a3c49a99-bd5d-48aa-a36c-c31ca3b504a0"
+      }
+    ]
+  },
+  "homeProject": {
+    "id": "TPcXfn0POF6ou4oi",
+    "type": "personal",
+    "name": "Himanshu Mahalle <himanshumahalle3@gmail.com>",
+    "icon": null
+  },
+  "sharedWithProjects": [],
+  "usedCredentials": [
+    {
+      "id": "Dj98sYXjOYlSNWk2",
+      "name": "SerpAPI account",
+      "type": "serpApi",
+      "currentUserCanUse": true,
+      "homeProject": {
+        "id": "TPcXfn0POF6ou4oi",
+        "type": "personal",
+        "name": "Himanshu Mahalle <himanshumahalle3@gmail.com>",
+        "icon": null
+      },
+      "sharedWithProjects": []
+    },
+    {
+      "id": "J1ecGTaF7NwrY67T",
+      "name": "Exa account",
+      "type": "exaApi",
+      "currentUserCanUse": true,
+      "homeProject": {
+        "id": "TPcXfn0POF6ou4oi",
+        "type": "personal",
+        "name": "Himanshu Mahalle <himanshumahalle3@gmail.com>",
+        "icon": null
+      },
+      "sharedWithProjects": []
+    },
+    {
+      "id": "l4oGEQnvmg9aQ4b0",
+      "name": "Google Docs account",
+      "type": "googleDocsOAuth2Api",
+      "currentUserCanUse": true,
+      "homeProject": {
+        "id": "TPcXfn0POF6ou4oi",
+        "type": "personal",
+        "name": "Himanshu Mahalle <himanshumahalle3@gmail.com>",
+        "icon": null
+      },
+      "sharedWithProjects": []
+    },
+    {
+      "id": "lHOoVtIigKGUc6sV",
+      "name": "Google Gemini(PaLM) Api account",
+      "type": "googlePalmApi",
+      "currentUserCanUse": true,
+      "homeProject": {
+        "id": "TPcXfn0POF6ou4oi",
+        "type": "personal",
+        "name": "Himanshu Mahalle <himanshumahalle3@gmail.com>",
+        "icon": null
+      },
+      "sharedWithProjects": []
+    }
+  ],
+  "scopes": [
+    "execution:delete",
+    "execution:list",
+    "execution:read",
+    "execution:reveal",
+    "workflow:create",
+    "workflow:delete",
+    "workflow:disableRedaction",
+    "workflow:enableRedaction",
+    "workflow:execute",
+    "workflow:execute-chat",
+    "workflow:export",
+    "workflow:import",
+    "workflow:list",
+    "workflow:move",
+    "workflow:publish",
+    "workflow:read",
+    "workflow:share",
+    "workflow:unpublish",
+    "workflow:unshare",
+    "workflow:update"
+  ],
+  "checksum": "53f89d3d216911d6ea6e4a0b723636f14d4320ead6e32544ee7f3357317714e5"
+}
